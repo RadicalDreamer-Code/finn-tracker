@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
 
-from app.domain.models import CompanyProfile, Quote, SymbolSearchResult, WatchlistEntry
+from app.domain.models import (
+    CompanyProfile,
+    Quote,
+    QuoteSnapshot,
+    SymbolSearchResult,
+    WatchlistEntry,
+)
 
 
 class MarketDataPort(ABC):
@@ -12,6 +18,19 @@ class MarketDataPort(ABC):
 
     @abstractmethod
     async def get_company_profile(self, symbol: str) -> CompanyProfile: ...
+
+
+class QuoteHistoryRepository(ABC):
+    @abstractmethod
+    async def save(self, snapshot: QuoteSnapshot) -> None: ...
+
+    @abstractmethod
+    async def get_latest(self, symbol: str) -> QuoteSnapshot | None: ...
+
+    @abstractmethod
+    async def get_history(
+        self, symbol: str, limit: int = 500
+    ) -> list[QuoteSnapshot]: ...
 
 
 class WatchlistRepository(ABC):

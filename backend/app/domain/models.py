@@ -34,6 +34,11 @@ class SymbolSearchResult(BaseModel):
     type: str
 
 
+class QuoteSnapshot(Quote):
+    eur_rate: float
+    fetched_at: datetime
+
+
 class WatchlistEntry(BaseModel):
     symbol: str
     added_at: datetime

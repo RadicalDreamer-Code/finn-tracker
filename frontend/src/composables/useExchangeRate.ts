@@ -8,7 +8,7 @@ async function fetchRate() {
   if (rate.value !== null || loading.value) return
   loading.value = true
   try {
-    const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=EUR')
+    const res = await fetch('https://api.frankfurter.dev/v1/latest?from=USD&to=EUR')
     const data = await res.json()
     rate.value = data.rates.EUR
   } catch {
