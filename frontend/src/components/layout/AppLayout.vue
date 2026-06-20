@@ -1,6 +1,6 @@
 <template>
   <div class="app-layout">
-    <WatchlistSidebar />
+    <AppNav />
     <main class="main-content">
       <slot />
     </main>
@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import WatchlistSidebar from '@/components/sidebar/WatchlistSidebar.vue'
+import AppNav from '@/components/layout/AppNav.vue'
 </script>
 
 <style scoped>

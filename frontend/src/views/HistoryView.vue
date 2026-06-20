@@ -1,20 +1,33 @@
 <template>
-  <div class="history-panel">
-    <div class="empty-state" v-if="!selectedSymbol">
+  <div class="history-view">
+    <div class="view-header">
+      <h1 class="view-title">History</h1>
+      <Select
+        v-model="selected"
+        :options="symbols"
+        placeholder="Select a symbol"
+        class="symbol-select"
+        size="small"
+        :disabled="symbols.length === 0"
+        filter
+      />
+    </div>
+
+    <div class="empty-state" v-if="!selected">
       <i class="pi pi-clock" />
-      <span>Select a symbol to view history</span>
+      <span v-if="symbols.length === 0">Add symbols to your watchlist first</span>
+      <span v-else>Select a symbol to view its history</span>
     </div>
 
     <template v-else>
-      <div class="history-header">
-        <span class="history-symbol">{{ selectedSymbol }}</span>
-        <span class="history-count" v-if="!loading">{{ snapshots.length }} entries</span>
+      <div class="history-meta" v-if="!loading">
+        <span class="history-count">{{ snapshots.length }} entries</span>
       </div>
 
       <div class="snapshot-list" v-if="!loading">
         <div class="empty-state" v-if="snapshots.length === 0">
           <i class="pi pi-database" />
-          <span>No history yet</span>
+          <span>No history yet for {{ selected }}</span>
         </div>
         <div v-for="snap in snapshots" :key="snap.fetched_at" class="snapshot-row">
           <div class="snap-time">{{ formatTime(snap.fetched_at) }}</div>
@@ -31,32 +44,39 @@
       </div>
 
       <div class="snapshot-list loading-state" v-else>
-        <Skeleton v-for="n in 6" :key="n" height="2.5rem" border-radius="6px" />
+        <Skeleton v-for="n in 8" :key="n" height="2.5rem" border-radius="6px" />
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
-import { storeToRefs } from 'pinia'
 import { useWatchlistStore } from '@/stores/watchlist'
 import { stocksApi } from '@/api/stocks'
 import type { QuoteSnapshot } from '@/types'
 import { useExchangeRate } from '@/composables/useExchangeRate'
 
 const store = useWatchlistStore()
-const { selectedSymbol } = storeToRefs(store)
 const { rate: eurRate } = useExchangeRate()
 
+const symbols = computed(() => store.entries.map((e) => e.entry.symbol))
+const selected = ref<string | null>(store.selectedSymbol)
 const snapshots = ref<QuoteSnapshot[]>([])
 const loading = ref(false)
 
+onMounted(async () => {
+  if (store.entries.length === 0) await store.fetchWatchlist()
+  if (!selected.value) selected.value = symbols.value[0] ?? null
+})
+
 watch(
-  selectedSymbol,
+  selected,
   async (symbol) => {
     if (!symbol) return
+    store.selectSymbol(symbol)
     loading.value = true
     snapshots.value = []
     try {
@@ -95,37 +115,47 @@ function formatTime(iso: string): string {
 </script>
 
 <style scoped>
-.history-panel {
+.history-view {
   flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-.history-header {
+.view-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  padding: 0 0.75rem 0.5rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.history-symbol {
+.view-title {
+  margin: 0;
+  font-size: 1.5rem;
   font-weight: 700;
-  font-size: 0.875rem;
+}
+
+.symbol-select {
+  width: 220px;
+}
+
+.history-meta {
+  margin-bottom: 0.75rem;
 }
 
 .history-count {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--p-text-muted-color);
 }
 
 .snapshot-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 0.75rem 1rem;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .loading-state {
@@ -136,16 +166,16 @@ function formatTime(iso: string): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.8rem;
   border-radius: 6px;
   border: 1px solid var(--p-surface-200);
   background: var(--p-surface-0);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .snap-time {
   color: var(--p-text-muted-color);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -162,7 +192,7 @@ function formatTime(iso: string): string {
 }
 
 .snap-change {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -179,16 +209,14 @@ function formatTime(iso: string): string {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 2rem 1rem;
+  padding: 3rem 1rem;
   color: var(--p-text-muted-color);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   text-align: center;
-  flex: 1;
-  justify-content: center;
 }
 
 .empty-state .pi {
-  font-size: 1.5rem;
+  font-size: 2rem;
   opacity: 0.4;
 }
 </style>

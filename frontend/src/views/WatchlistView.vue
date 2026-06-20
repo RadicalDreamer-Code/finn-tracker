@@ -1,27 +1,22 @@
 <template>
-  <div class="watchlist-panel">
-    <div class="panel-toolbar">
-      <IconField class="filter-field">
-        <InputIcon class="pi pi-search" />
-        <InputText v-model="filterQuery" placeholder="Filter…" class="w-full" size="small" />
-      </IconField>
-      <Button
-        icon="pi pi-plus"
-        text
-        rounded
-        size="small"
-        aria-label="Add symbol"
-        @click="showDialog = true"
-      />
+  <div class="watchlist-view">
+    <div class="view-header">
+      <h1 class="view-title">Watchlist</h1>
+      <div class="view-toolbar">
+        <IconField class="filter-field">
+          <InputIcon class="pi pi-search" />
+          <InputText v-model="filterQuery" placeholder="Filter…" class="w-full" size="small" />
+        </IconField>
+        <Button icon="pi pi-plus" label="Add" size="small" @click="showDialog = true" />
+      </div>
     </div>
 
-    <div class="card-list" v-if="!store.loading">
+    <div class="card-grid" v-if="!store.loading">
       <StockCard
         v-for="item in filteredEntries"
         :key="item.entry.symbol"
         :item="item"
-        :is-active="item.entry.symbol === store.selectedSymbol"
-        @select="store.selectSymbol"
+        @select="openDetail"
         @remove="confirmRemove"
       />
       <div class="empty-state" v-if="filteredEntries.length === 0">
@@ -31,8 +26,8 @@
       </div>
     </div>
 
-    <div class="card-list loading-state" v-else>
-      <Skeleton v-for="n in 4" :key="n" height="3.5rem" border-radius="8px" />
+    <div class="card-grid loading-state" v-else>
+      <Skeleton v-for="n in 6" :key="n" height="3.5rem" border-radius="8px" />
     </div>
 
     <AddSymbolDialog v-model="showDialog" @add="handleAdd" />
@@ -41,6 +36,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
@@ -48,10 +44,11 @@ import InputText from 'primevue/inputtext'
 import Skeleton from 'primevue/skeleton'
 import { useToast } from 'primevue/usetoast'
 import { useWatchlistStore } from '@/stores/watchlist'
-import AddSymbolDialog from './AddSymbolDialog.vue'
-import StockCard from './StockCard.vue'
+import AddSymbolDialog from '@/components/AddSymbolDialog.vue'
+import StockCard from '@/components/StockCard.vue'
 
 const store = useWatchlistStore()
+const router = useRouter()
 const toast = useToast()
 const showDialog = ref(false)
 const filterQuery = ref('')
@@ -63,6 +60,11 @@ const filteredEntries = computed(() =>
 )
 
 onMounted(() => store.fetchWatchlist())
+
+function openDetail(symbol: string) {
+  store.selectSymbol(symbol)
+  router.push({ name: 'stock', params: { symbol } })
+}
 
 async function handleAdd(symbol: string) {
   try {
@@ -84,50 +86,61 @@ async function confirmRemove(symbol: string) {
 </script>
 
 <style scoped>
-.watchlist-panel {
+.watchlist-view {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  padding: 2rem;
 }
 
-.panel-toolbar {
+.view-header {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0 0.5rem 0.5rem;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.view-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.view-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .filter-field {
-  flex: 1;
+  width: 220px;
 }
 
-.card-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.25rem 0.75rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
 }
 
 .loading-state {
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .empty-state {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 2rem 1rem;
+  padding: 3rem 1rem;
   color: var(--p-text-muted-color);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   text-align: center;
 }
 
 .empty-state .pi {
-  font-size: 1.5rem;
+  font-size: 2rem;
   opacity: 0.4;
 }
 </style>

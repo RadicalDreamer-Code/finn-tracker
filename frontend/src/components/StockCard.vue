@@ -38,10 +38,13 @@ import Tag from 'primevue/tag'
 import type { WatchlistEntryWithQuote } from '@/types'
 import { useExchangeRate } from '@/composables/useExchangeRate'
 
-defineProps<{
-  item: WatchlistEntryWithQuote
-  isActive: boolean
-}>()
+withDefaults(
+  defineProps<{
+    item: WatchlistEntryWithQuote
+    isActive?: boolean
+  }>(),
+  { isActive: false },
+)
 
 const emit = defineEmits<{
   select: [symbol: string]

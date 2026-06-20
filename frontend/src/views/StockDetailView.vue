@@ -1,11 +1,16 @@
 <template>
   <div class="dashboard">
-    <div v-if="selectedSymbol" class="stock-detail">
+    <RouterLink :to="{ name: 'watchlist' }" class="back-link">
+      <i class="pi pi-arrow-left" />
+      <span>Back to watchlist</span>
+    </RouterLink>
+
+    <div class="stock-detail">
       <div class="detail-header" v-if="profile">
         <img v-if="profile.logo" :src="profile.logo" :alt="profile.name" class="company-logo" />
         <div class="detail-title">
           <h1 class="company-name">{{ profile.name }}</h1>
-          <span class="detail-meta">{{ selectedSymbol }} · {{ profile.exchange }} · {{ profile.currency }}</span>
+          <span class="detail-meta">{{ symbol }} · {{ profile.exchange }} · {{ profile.currency }}</span>
         </div>
       </div>
 
@@ -71,11 +76,6 @@
         <ProgressSpinner />
       </div>
     </div>
-
-    <div class="empty-detail" v-else>
-      <i class="pi pi-chart-line" />
-      <p>Select a symbol from the watchlist to see details</p>
-    </div>
   </div>
 </template>
 
@@ -85,12 +85,9 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
 import { stocksApi } from '@/api/stocks'
 import type { CompanyProfile, Quote } from '@/types'
-import { useWatchlistStore } from '@/stores/watchlist'
-import { storeToRefs } from 'pinia'
 import { useExchangeRate } from '@/composables/useExchangeRate'
 
-const store = useWatchlistStore()
-const { selectedSymbol } = storeToRefs(store)
+const props = defineProps<{ symbol: string }>()
 const { rate: eurRate, loading: rateLoading, error: rateError } = useExchangeRate()
 
 const quote = ref<Quote | null>(null)
@@ -98,7 +95,7 @@ const profile = ref<CompanyProfile | null>(null)
 const loading = ref(false)
 
 watch(
-  selectedSymbol,
+  () => props.symbol,
   async (symbol) => {
     if (!symbol) return
     loading.value = true
@@ -138,6 +135,20 @@ function formatMarketCap(value: number): string {
   overflow-y: auto;
   padding: 2rem;
   position: relative;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+}
+
+.back-link:hover {
+  color: var(--p-text-color);
 }
 
 .stock-detail {
@@ -275,25 +286,5 @@ function formatMarketCap(value: number): string {
   align-items: center;
   justify-content: center;
   background: rgba(var(--p-surface-0-rgb), 0.6);
-}
-
-.empty-detail {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  color: var(--p-text-muted-color);
-}
-
-.empty-detail .pi {
-  font-size: 3rem;
-  opacity: 0.3;
-}
-
-.empty-detail p {
-  margin: 0;
-  font-size: 0.95rem;
 }
 </style>
