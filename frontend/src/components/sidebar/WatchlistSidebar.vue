@@ -24,6 +24,12 @@
       </IconField>
     </div>
 
+    <div class="currency-status">
+      <span v-if="eurRate !== null" class="currency-pill eur">EUR</span>
+      <span v-else-if="rateLoading" class="currency-pill loading">USD · loading EUR…</span>
+      <span v-else class="currency-pill warn">USD · rate unavailable</span>
+    </div>
+
     <div class="sidebar-list" v-if="!store.loading">
       <WatchlistItem
         v-for="item in filteredEntries"
@@ -59,8 +65,10 @@ import { useToast } from 'primevue/usetoast'
 import { useWatchlistStore } from '@/stores/watchlist'
 import AddSymbolDialog from './AddSymbolDialog.vue'
 import WatchlistItem from './WatchlistItem.vue'
+import { useExchangeRate } from '@/composables/useExchangeRate'
 
 const store = useWatchlistStore()
+const { rate: eurRate, loading: rateLoading } = useExchangeRate()
 const toast = useToast()
 const showDialog = ref(false)
 const filterQuery = ref('')
@@ -121,6 +129,35 @@ async function confirmRemove(symbol: string) {
 
 .search-bar {
   padding: 0 0.75rem 0.5rem;
+}
+
+.currency-status {
+  padding: 0 0.75rem 0.5rem;
+}
+
+.currency-pill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.currency-pill.eur {
+  background: var(--p-green-100);
+  color: var(--p-green-700);
+}
+
+.currency-pill.loading {
+  background: var(--p-surface-200);
+  color: var(--p-text-muted-color);
+}
+
+.currency-pill.warn {
+  background: var(--p-orange-100);
+  color: var(--p-orange-700);
 }
 
 .sidebar-list {

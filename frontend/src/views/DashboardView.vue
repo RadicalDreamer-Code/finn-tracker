@@ -18,6 +18,9 @@
             :severity="quote.change_percent >= 0 ? 'success' : 'danger'"
             class="price-change"
           />
+          <Tag v-if="eurRate !== null" value="EUR" severity="success" class="currency-tag" />
+          <Tag v-else-if="rateLoading" value="USD · loading EUR…" severity="secondary" class="currency-tag" />
+          <Tag v-else-if="rateError" value="USD · EUR rate unavailable" severity="warn" class="currency-tag" />
         </div>
         <div class="metric-grid">
           <div class="metric">
@@ -84,9 +87,11 @@ import { stocksApi } from '@/api/stocks'
 import type { CompanyProfile, Quote } from '@/types'
 import { useWatchlistStore } from '@/stores/watchlist'
 import { storeToRefs } from 'pinia'
+import { useExchangeRate } from '@/composables/useExchangeRate'
 
 const store = useWatchlistStore()
 const { selectedSymbol } = storeToRefs(store)
+const { rate: eurRate, loading: rateLoading, error: rateError } = useExchangeRate()
 
 const quote = ref<Quote | null>(null)
 const profile = ref<CompanyProfile | null>(null)
@@ -112,12 +117,18 @@ watch(
 )
 
 function formatCurrency(value: number): string {
+  if (eurRate.value !== null) {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value * eurRate.value)
+  }
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
 }
 
 function formatMarketCap(value: number): string {
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}B`
-  return `$${value.toFixed(2)}M`
+  if (eurRate.value !== null) {
+    const v = value * eurRate.value
+    return v >= 1_000 ? `€${(v / 1_000).toFixed(2)}B` : `€${v.toFixed(2)}M`
+  }
+  return value >= 1_000 ? `$${(value / 1_000).toFixed(2)}B` : `$${value.toFixed(2)}M`
 }
 </script>
 
@@ -186,6 +197,11 @@ function formatMarketCap(value: number): string {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--p-text-muted-color);
+}
+
+.currency-tag {
+  align-self: center;
+  font-size: 0.65rem;
 }
 
 .price-value {

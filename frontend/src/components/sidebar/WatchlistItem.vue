@@ -36,6 +36,7 @@
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import type { WatchlistEntryWithQuote } from '@/types'
+import { useExchangeRate } from '@/composables/useExchangeRate'
 
 defineProps<{
   item: WatchlistEntryWithQuote
@@ -47,7 +48,12 @@ const emit = defineEmits<{
   remove: [symbol: string]
 }>()
 
+const { rate: eurRate } = useExchangeRate()
+
 function formatCurrency(value: number): string {
+  if (eurRate.value !== null) {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(value * eurRate.value)
+  }
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value)
 }
 
