@@ -39,3 +39,8 @@ export interface WatchlistEntryWithQuote {
   entry: WatchlistEntry
   quote: Quote | null
 }
+
+export interface QuoteSnapshot extends Quote {
+  eur_rate: number
+  fetched_at: string
+}
